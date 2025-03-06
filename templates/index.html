@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Cast Explorer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="container max-w-3xl p-8">
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">Movie Explorer</h1>
+        
+        <div class="space-y-8">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-700 mb-2">Search by Movie Name</h2>
+                <div class="flex space-x-2">
+                    <input id="movie-input" type="text" class="flex-grow p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter movie name...">
+                    <button onclick="searchMovie()" class="btn bg-blue-600 text-white p-3 rounded-lg">Get Cast</button>
+                </div>
+                <div id="movie-result" class="mt-4 text-gray-800"></div>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-semibold text-gray-700 mb-2">Search by Cast Name</h2>
+                <div class="flex space-x-2">
+                    <input id="cast-input" type="text" class="flex-grow p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter cast name...">
+                    <button onclick="searchCast()" class="btn bg-purple-600 text-white p-3 rounded-lg">Search Movies</button>
+                </div>
+                <div id="cast-search-result" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function searchMovie() {
+            const query = document.getElementById('movie-input').value;
+            const resultDiv = document.getElementById('movie-result');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            try {
+                const response = await fetch(`/api/movie_cast?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                let output = `<p><strong>${data.title}</strong> (IMDb ID: ${data.imdb_id})</p>`;
+                output += `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Actor</th>
+                                <th>Character</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                data.top_cast.forEach((member, index) => {
+                    output += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${member.name}</td>
+                            <td>${member.character}</td>
+                        </tr>`;
+                });
+                output += `</tbody></table>`;
+                output += `<br>`
+                output += `<h3>Details</h3>`
+                output += `<h3>${data.details}</h3>`
+                output += `<br>`
+                resultDiv.innerHTML = output;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function searchCast() {
+            const query = document.getElementById('cast-input').value;
+            const resultDiv = document.getElementById('cast-search-result');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            try {
+                const response = await fetch(`/api/search/cast?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                let table = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Movie Title</th>
+                                <th>IMDb ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                data.movies.forEach((movie, index) => {
+                    table += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${movie.title}</td>
+                            <td>${movie.imdb_id}</td>
+                        </tr>`;
+                });
+                table += `</tbody></table>`;
+                resultDiv.innerHTML = table;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
